@@ -10,12 +10,12 @@ class PersonaControl {
         var lista = await persona.findOne({
             where: { external_id: external },
             include: [
-                { model: models.cuenta, as: 'cuenta', attributes: ['correo'] },
+                { model: models.cuenta, as: 'cuenta', attributes: ['correo', 'clave'] },
                 { model: models.rol, as: 'rol', attributes: ['nombre'] }
             ],
             attributes: ['nombres', 'apellidos', 'celular', 'fecha_nac', 'direccion', 'id_rol', 'external_id']
         });
-        if (lista == undefined || lista==null) {
+        if (lista == undefined || lista == null) {
             res.status(404);
             res.json({ msg: "No encontrado", code: 404, datos: {} });
         } else {
@@ -100,7 +100,7 @@ class PersonaControl {
             res.json({ msg: "ERROR", tag: "Datos incorrectos", code: 400 });
         }
     }
-    
+
     async guardar(req, res) {
         if (req.body.hasOwnProperty('nombres') &&
             req.body.hasOwnProperty('apellidos') &&
@@ -113,7 +113,7 @@ class PersonaControl {
 
             var uuid = require('uuid');
             var rolA = await rol.findOne({ where: { external_id: req.body.rol } });
-            
+
             var cuentaA = await cuenta.findOne({ where: { correo: req.body.correo } });
             if (cuentaA != null) {
                 res.status(400);
@@ -174,136 +174,55 @@ class PersonaControl {
             req.body.hasOwnProperty('fecha') &&
             req.body.hasOwnProperty('direccion') &&
             req.body.hasOwnProperty('correo') &&
-            req.body.hasOwnProperty('clave') &&
-            req.body.hasOwnProperty('rol')
-        ) {
-            const external = req.params.external;
-    
-            try {
-                const personaA = await persona.findOne({ where: { external_id: external } });
-    
-                if (!personaA) {
-                    res.status(404);
-                    return res.json({ msg: "ERROR", tag: "Registro no encontrado", code: 404 });
-                }
-    
-                const rolA = await rol.findOne({ where: { external_id: req.body.rol } });
-    
-                if (!rolA) {
-                    res.status(400);
-                    return res.json({ msg: "ERROR", tag: "Rol no existente", code: 400 });
-                }
-
-                var cuentaA = await cuenta.findOne({ where: { correo: req.body.correo } });
-                if (cuentaA != null) {
-                    res.status(400);
-                    return res.json({ msg: "ERROR", tag: "Correo ya existente", code: 400 });
-                }
-                const data = {
-                    nombres: req.body.nombres,
-                    apellidos: req.body.apellidos,
-                    celular: req.body.celular,
-                    fecha_nac: req.body.fecha,
-                    direccion: req.body.direccion,
-                    id_rol: rolA.id,
-                    cuenta: {
-                        correo: req.body.correo,
-                        clave: req.body.clave,
-                    },
-                };
-    
-                const transaction = await models.sequelize.transaction();
-    
-                try {
-                    await personaA.update(data, {
-                        include: [{ model: models.cuenta, as: "cuenta" }],
-                        transaction,
-                    });
-                    //rolA.external_id=uuid.v4();
-                    await rolA.update();
-
-                    //personaA.external_id=uuid.v4();
-                    //await personaA.update();
-                    await transaction.commit();
-    
-                    
-                    res.status(200);
-                    res.json({ msg: "OK", code: 200 });
-
-                } catch (error) {
-                    if (transaction) await transaction.rollback();
-    
-                    res.status(203);
-                    res.json({ msg: "ERROR", code: 203, error_msg: error });
-                }
-            } catch (error) {
-                res.status(500);
-                res.json({ msg: "ERROR", code: 500, error_msg: error });
-            }
-        } else {
-            res.status(400);
-            res.json({ msg: "ERROR", tag: "Datos incorrectos", code: 400 });
-        }
-    }
-    async modificarUsuario(req, res) {
-        if (
-            req.body.hasOwnProperty('nombres') &&
-            req.body.hasOwnProperty('apellidos') &&
-            req.body.hasOwnProperty('celular') &&
-            req.body.hasOwnProperty('fecha') &&
-            req.body.hasOwnProperty('direccion') &&
-            req.body.hasOwnProperty('correo') &&
             req.body.hasOwnProperty('clave')
         ) {
             const external = req.params.external;
-    
+
             try {
                 const personaA = await persona.findOne({ where: { external_id: external } });
-    
+
                 if (!personaA) {
                     res.status(404);
                     return res.json({ msg: "ERROR", tag: "Registro no encontrado", code: 404 });
                 }
-                                
-                var cuentaA = await cuenta.findOne({ where: { correo: req.body.correo } });
-                if (cuentaA != null) {
-                    res.status(400);
-                    return res.json({ msg: "ERROR", tag: "Correo ya existente", code: 400 });
-                }
+
+                // Crear objeto con los datos actualizados
                 const data = {
                     nombres: req.body.nombres,
                     apellidos: req.body.apellidos,
                     celular: req.body.celular,
                     fecha_nac: req.body.fecha,
                     direccion: req.body.direccion,
-                    cuenta: {
-                        correo: req.body.correo,
-                        clave: req.body.clave,
-                    },
                 };
-    
-                const transaction = await models.sequelize.transaction();
-    
-                try {
-                    await personaA.update(data, {
-                        include: [{ model: models.cuenta, as: "cuenta" }],
-                        transaction,
-                    });
-                    await transaction.commit();
-    
-                    
-                    res.status(200);
-                    res.json({ msg: "OK", code: 200 });
 
-                } catch (error) {
-                    if (transaction) await transaction.rollback();
-    
-                    res.status(203);
-                    res.json({ msg: "ERROR", code: 203, error_msg: error });
+                // Actualizar los datos de la persona
+                await personaA.update(data);
+
+                // Buscar la cuenta asociada a la persona
+                const cuentaA = await cuenta.findOne({ where: { id_persona: personaA.id } });
+
+                if (!cuentaA) {
+                    res.status(404);
+                    return res.json({ msg: "ERROR", tag: "Cuenta no encontrada", code: 404 });
                 }
+
+                // Crear objeto con los datos de la cuenta actualizados
+                const subData = {
+                    correo: req.body.correo,
+                    clave: req.body.clave,
+                };
+
+                // Actualizar los datos de la cuenta
+                await cuentaA.update(subData);
+
+                res.status(200);
+                res.json({ msg: "OK", code: 200 });
+
             } catch (error) {
-                res.status(500);
-                res.json({ msg: "ERROR", code: 500, error_msg: error });
+                if (transaction) await transaction.rollback();
+
+                res.status(203);
+                res.json({ msg: "ERROR", code: 203, error_msg: error });
             }
         } else {
             res.status(400);
@@ -311,4 +230,5 @@ class PersonaControl {
         }
     }
 }
+
 module.exports = PersonaControl;

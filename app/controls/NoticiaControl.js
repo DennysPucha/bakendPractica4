@@ -13,9 +13,9 @@ class NoticiaControl {
         var lista = await noticia.findAll({
             include: [
                 { model: models.persona, as: 'persona', attributes: ['apellidos', 'nombres'] },
-                {model: models.comentario, as: 'comentario', attributes: ['texto', 'fecha', 'estado', 'usuario', 'latitud', 'longitud', 'external_id']}
+                { model: models.comentario, as: 'comentario', attributes: ['texto', 'fecha', 'estado', 'usuario', 'latitud', 'longitud', 'external_id'] }
             ],
-            attributes: ['titulo', 'cuerpo','estado','tipo_archivo', 'fecha', 'tipo_noticia', 'external_id', 'archivo']
+            attributes: ['titulo', 'cuerpo', 'estado', 'tipo_archivo', 'fecha', 'tipo_noticia', 'external_id', 'archivo']
         });
         res.status(200);
         res.json({ msg: "OK", code: 200, datos: lista });
@@ -37,6 +37,50 @@ class NoticiaControl {
         } else {
             res.status(200);
             res.json({ msg: "OK", code: 200, datos: lista });
+        }
+    }
+
+    async  obtenerComentarios(req, res) {
+        const external = req.params.external;
+        var noticiaEncontrada = await noticia.findOne({ where: { external_id: external, estado:true } });
+        if (!noticiaEncontrada) {
+            res.status(404);
+            res.json({ msg: "No encontrado", code: 404, datos: {} });
+        } else {
+            var listaComentarios = await models.comentario.findAll({
+                where: { id_noticia: noticiaEncontrada.id, estado: true},
+                order: [['fecha', 'DESC']], // Ordenar por fecha descendente
+                limit: 10, // Limitar a los primeros 10 comentarios
+                attributes: ['texto', 'fecha', 'estado', 'usuario', 'latitud', 'longitud', 'external_id']
+            });
+            res.status(200);
+            res.json({ msg: "OK", code: 200, datos: listaComentarios });
+        }
+    }
+    
+    async  obtenerComentariosNoticiaPersona(req, res) {
+        const external = req.params.external;
+        if (req.body.hasOwnProperty('persona')) {
+            var noticiaEncontrada = await noticia.findOne({ where: { external_id: external, estado:true } });
+            var personaEncontrada = await persona.findOne({ where: { external_id: req.body.persona } });
+            if (!personaEncontrada) {
+                res.status(404);
+                res.json({ msg: "Persona no encontrada", code: 404, datos: {} });
+            } else if (!noticiaEncontrada) {
+                res.status(404);
+                res.json({ msg: "Noticia no encontrada", code: 404, datos: {} });
+            } else {
+                var comentarios = await models.comentario.findAll({
+                    where: { id_noticia: noticiaEncontrada.id, usuario: req.body.persona , estado: true},
+                    order: [['fecha', 'DESC']], // Ordenar por fecha descendente
+                    limit: 10, // Limitar a los primeros 10 comentarios
+                });
+                res.status(200);
+                res.json({ msg: "OK", code: 200, datos: comentarios });
+            }
+        } else {
+            res.status(400);
+            res.json({ msg: "ERROR", tag: "Datos incorrectos", code: 400 });
         }
     }
 
@@ -103,7 +147,7 @@ class NoticiaControl {
             req.body.hasOwnProperty('fecha') &&
             req.body.hasOwnProperty('tipo_noticia') &&
             req.body.hasOwnProperty('persona')) {
-    
+
             var uuid = require('uuid');
 
             var perA = await persona.findOne({
@@ -160,7 +204,7 @@ class NoticiaControl {
             where: { external_id: external },
         });
         console.log(noticiaA);
-    
+
         var form = new formidable.IncomingForm(), files = [];
         form.on('file', function (field, file) {
             files.push(file);
@@ -169,13 +213,13 @@ class NoticiaControl {
         });
         form.parse(req, function (err, fields) {
             let listado = files;
-            const maxSize = 2 * 1024 * 1024; 
+            const maxSize = 2 * 1024 * 1024;
             const allowedFormats = ['jpg', 'png'];
             for (let index = 0; index < listado.length; index++) {
                 var file = listado[index];
-    
+
                 var extension = file.originalFilename.split('.').pop().toLowerCase();
-    
+
                 if (file.size > maxSize || !allowedFormats.includes(extension)) {
                     res.status(400);
                     res.json({
@@ -183,7 +227,7 @@ class NoticiaControl {
                         tag: "Formato o tamaño de archivo no válido",
                         code: 400
                     });
-                    return; 
+                    return;
                 } else {
                     const name = external + '.' + extension;
                     console.log(extension);

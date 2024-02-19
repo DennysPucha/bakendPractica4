@@ -64,7 +64,6 @@ router.post('/admin/persona/save',personaControl.guardar);
 router.get('/admin/persona/get/:external',personaControl.obtener);
 router.post('/admin/persona/modificar/:external',personaControl.modificar);
 router.post('/admin/persona/saveUser',personaControl.guardarUsuario);
-router.post('/admin/persona/modificarUser/:external',personaControl.modificarUsuario);
 
 router.get('/admin/roles',rolControl.listar);
 router.post('/admin/rol/save',rolControl.guardar);
@@ -78,11 +77,13 @@ router.get('/admin/noticia/get/:external',noticiaControl.obtener);
 router.post('/admin/noticia/save',noticiaControl.guardar);
 router.post('/admin/noticia/modify/:external',noticiaControl.modificar);
 router.post('/admin/noticia/file/save/:external',noticiaControl.guardarFoto);
-
+router.get('/admin/noticia/get/comentarios/:external',noticiaControl.obtenerComentarios);
+router.post('/admin/noticia/get/comentariosbyUser/:external',noticiaControl.obtenerComentariosNoticiaPersona);
 
 router.get('/admin/comentarios',comentarioControl.listar);
 router.get('/admin/comentario/get/:external',comentarioControl.obtener);
 router.post('/admin/comentario/save',comentarioControl.guardar);
 router.post('/admin/comentario/modify/:external',comentarioControl.modificar);
-router.get('/admin/noticia/get/comentarios/:external',comentarioControl.obtenerComentarios);
+router.post('/admin/comentario/banear/:external',comentarioControl.banearComentario);
+
 module.exports = router;

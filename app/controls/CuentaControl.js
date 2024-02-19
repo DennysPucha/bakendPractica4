@@ -21,7 +21,7 @@ class CuentaControl {
                 let cuentaA=await cuenta.findOne({
                     where:{correo:req.body.correo},
                     include: [
-                        { model: models.persona, as: 'persona', attributes: ['apellidos','nombres','external_id'] },
+                        { model: models.persona, as: 'persona' },
                     ],
                 });
                 if (cuentaA==null){
@@ -39,9 +39,18 @@ class CuentaControl {
                             const token = jwt.sign(token_data,key,{
                                 expiresIn:'2h'
                             });
+
+                            const rolA=await models.rol.findOne({where:{id:cuentaA.persona.id_rol}});
+
+                            if (rolA==null){
+                                res.status(400);
+                                res.json({ msg: "ERROR",tag:"Rol de persona no encontrado",code:400 });
+                            }
+
                             var info={
                                 token:token,
                                 user: cuentaA.persona.apellidos+' '+ cuentaA.persona.nombres,
+                                rol: rolA.nombre,
                                 external: cuentaA.persona.external_id,
                             };
                             res.status(200);
