@@ -59,31 +59,31 @@ router.get('/', function(req, res, next) {
 
 
 
-router.get('/admin/personas',personaControl.listar);
-router.post('/admin/persona/save',personaControl.guardar);
-router.get('/admin/persona/get/:external',personaControl.obtener);
-router.post('/admin/persona/modificar/:external',personaControl.modificar);
-router.post('/admin/persona/saveUser',personaControl.guardarUsuario);
+router.get('/admin/personas',auth,personaControl.listar);
+router.post('/admin/persona/save',auth,personaControl.guardar);
+router.get('/admin/persona/get/:external',auth,personaControl.obtener);
+router.post('/admin/persona/modificar/:external',auth,personaControl.modificar);
+router.post('/admin/persona/saveUser',auth,personaControl.guardarUsuario);
 
-router.get('/admin/roles',rolControl.listar);
-router.post('/admin/rol/save',rolControl.guardar);
+router.get('/admin/roles',auth,rolControl.listar);
+router.post('/admin/rol/save',auth,rolControl.guardar);
 
-router.post('/admin/inicio_sesion',cuentaControl.inicio_sesion);
-router.get('/admin/cuentas',cuentaControl.listar);
+router.post('/admin/inicio_sesion',auth,cuentaControl.inicio_sesion);
+router.get('/admin/cuentas',auth,cuentaControl.listar);
 
 
-router.get('/admin/noticias',noticiaControl.listar);
-router.get('/admin/noticia/get/:external',noticiaControl.obtener);
-router.post('/admin/noticia/save',noticiaControl.guardar);
-router.post('/admin/noticia/modify/:external',noticiaControl.modificar);
-router.post('/admin/noticia/file/save/:external',noticiaControl.guardarFoto);
-router.get('/admin/noticia/get/comentarios/:external',noticiaControl.obtenerComentarios);
-router.post('/admin/noticia/get/comentariosbyUser/:external',noticiaControl.obtenerComentariosNoticiaPersona);
+router.get('/admin/noticias',auth,noticiaControl.listar);
+router.get('/admin/noticia/get/:external',auth,noticiaControl.obtener);
+router.post('/admin/noticia/save',auth,noticiaControl.guardar);
+router.post('/admin/noticia/modify/:external',auth,noticiaControl.modificar);
+router.post('/admin/noticia/file/save/:external',auth,noticiaControl.guardarFoto);
+router.get('/admin/noticia/get/comentarios/:external',auth,noticiaControl.obtenerComentarios);
+router.post('/admin/noticia/get/comentariosbyUser/:external',auth,noticiaControl.obtenerComentariosNoticiaPersona);
 
-router.get('/admin/comentarios',comentarioControl.listar);
-router.get('/admin/comentario/get/:external',comentarioControl.obtener);
-router.post('/admin/comentario/save',comentarioControl.guardar);
-router.post('/admin/comentario/modify/:external',comentarioControl.modificar);
-router.post('/admin/comentario/banear/:external',comentarioControl.banearComentario);
+router.get('/admin/comentarios',auth,comentarioControl.listar);
+router.get('/admin/comentario/get/:external',auth,comentarioControl.obtener);
+router.post('/admin/comentario/save',auth,comentarioControl.guardar);
+router.post('/admin/comentario/modify/:external',auth,comentarioControl.modificar);
+router.post('/admin/comentario/banear/:external',auth,comentarioControl.banearComentario);
 
 module.exports = router;
